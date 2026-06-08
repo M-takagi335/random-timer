@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>はじめるためのランダムタイマー</title>
+  <style>
+    :root{
+      --bg:#030303;
+      --panel:#0d0d0f;
+      --panel2:#151518;
+      --text:#f4f4f5;
+      --muted:#8f8f98;
+      --line:rgba(255,255,255,.12);
+      --accent:#ffffff;
+      --danger:#ff4d4d;
+      --ok:#c9ff75;
+      --shadow:0 30px 100px rgba(0,0,0,.7);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255,255,255,.13), transparent 35%),
+        radial-gradient(circle at 85% 15%, rgba(255,255,255,.07), transparent 28%),
+        linear-gradient(180deg, #050505 0%, var(--bg) 55%, #000 100%);
+      overflow:hidden;
+    }
+    body::before{
+      content:"";
+      position:fixed; inset:-50%;
+      pointer-events:none;
+      opacity:.23;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='.4'/%3E%3C/svg%3E");
+      animation: grain 9s steps(8) infinite;
+      mix-blend-mode:screen;
+    }
+    @keyframes grain{0%,100%{transform:translate(0,0)}25%{transform:translate(4%,2%)}50%{transform:translate(-3%,5%)}75%{transform:translate(2%,-4%)}}
+    .app{
+      position:relative;
+      min-height:100%;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .orb{
+      position:absolute;
+      width:min(72vw, 620px);
+      aspect-ratio:1;
+      border-radius:50%;
+      background:radial-gradient(circle at 48% 44%, rgba(255,255,255,.16), rgba(255,255,255,.04) 36%, rgba(255,255,255,.015) 58%, transparent 70%);
+      filter:blur(.2px);
+      opacity:.8;
+      transform:translateY(-10vh);
+    }
+    .card{
+      width:min(94vw, 470px);
+      position:relative;
+      border:1px solid var(--line);
+      border-radius:34px;
+      padding:26px;
+      background:linear-gradient(180deg, rgba(19,19,22,.84), rgba(5,5,6,.82));
+      box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.12);
+      backdrop-filter: blur(18px);
+    }
+    .topline{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:26px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      color:#d9d9dd;
+      font-size:13px;
+      letter-spacing:.08em;
+    }
+    .dot{
+      width:9px;height:9px;border-radius:50%;background:#fff;
+      box-shadow:0 0 20px rgba(255,255,255,.9);
+    }
+    .status-pill{
+      border:1px solid var(--line);
+      color:var(--muted);
+      border-radius:999px;
+      padding:7px 11px;
+      font-size:12px;
+      background:rgba(255,255,255,.03);
+    }
+    h1{
+      font-size:clamp(34px, 8vw, 56px);
+      line-height:.98;
+      letter-spacing:-.065em;
+      margin:0 0 14px;
+      font-weight:760;
+    }
+    .lead{
+      margin:0 0 28px;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.8;
+    }
+    .mystery{
+      margin:28px 0;
+      border:1px solid rgba(255,255,255,.1);
+      background:linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.015));
+      border-radius:28px;
+      padding:26px 20px;
+      text-align:center;
+      overflow:hidden;
+      position:relative;
+    }
+    .mystery::before{
+      content:"";
+      position:absolute; inset:0;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+      transform:translateX(-120%);
+      animation: sweep 3.4s ease-in-out infinite;
+    }
+    @keyframes sweep{0%,42%{transform:translateX(-120%)}78%,100%{transform:translateX(120%)}}
+    .hidden-time{
+      font-size:clamp(42px, 12vw, 74px);
+      line-height:1;
+      letter-spacing:.18em;
+      filter:blur(.2px);
+      user-select:none;
+    }
+    .caption{
+      margin-top:12px;
+      color:#a6a6ad;
+      font-size:13px;
+      letter-spacing:.08em;
+    }
+    .inputs{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin:18px 0 16px;
+    }
+    label{
+      display:block;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:rgba(255,255,255,.035);
+    }
+    label span{
+      display:block;
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:9px;
+    }
+    input{
+      width:100%;
+      border:0;
+      outline:0;
+      color:var(--text);
+      background:transparent;
+      font-size:28px;
+      font-weight:700;
+      letter-spacing:-.04em;
+    }
+    .buttons{display:grid;grid-template-columns:1fr .46fr;gap:12px;margin-top:18px}
+    button{
+      border:0;
+      border-radius:22px;
+      min-height:62px;
+      cursor:pointer;
+      font:inherit;
+      transition:transform .16s ease, opacity .16s ease, background .16s ease;
+    }
+    button:active{transform:scale(.975)}
+    .start{
+      background:#fff;
+      color:#000;
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:-.03em;
+      box-shadow:0 20px 60px rgba(255,255,255,.14);
+    }
+    .stop{
+      color:#fff;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.1);
+      font-weight:700;
+    }
+    .stop:disabled{opacity:.38;cursor:not-allowed}
+    .message{
+      min-height:25px;
+      margin-top:16px;
+      color:#bdbdc4;
+      text-align:center;
+      font-size:13px;
+      line-height:1.7;
+    }
+    .running .orb{animation:breathe 5.8s ease-in-out infinite}
+    .running .hidden-time{animation:pulse 1.8s ease-in-out infinite}
+    @keyframes breathe{0%,100%{transform:translateY(-10vh) scale(.94);opacity:.55}50%{transform:translateY(-10vh) scale(1.04);opacity:.95}}
+    @keyframes pulse{0%,100%{opacity:.35;letter-spacing:.18em}50%{opacity:1;letter-spacing:.24em}}
+    .done-flash{
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:0;
+      background:#fff;
+    }
+    .flash .done-flash{animation:flash .9s ease-out}
+    @keyframes flash{0%{opacity:0}18%{opacity:.95}100%{opacity:0}}
+    dialog{
+      width:min(90vw, 430px);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:30px;
+      padding:28px;
+      color:#fff;
+      background:linear-gradient(180deg, #17171a, #050505);
+      box-shadow:0 40px 120px rgba(0,0,0,.85);
+    }
+    dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(10px)}
+    dialog h2{margin:0 0 10px;font-size:36px;letter-spacing:-.06em}
+    dialog p{margin:0 0 22px;color:#b7b7bf;line-height:1.7}
+    .again{width:100%;background:#fff;color:#000;font-weight:850;font-size:17px}
+    .tiny{font-size:11px;color:#73737c;text-align:center;margin-top:16px;line-height:1.6}
+    @media (max-width:420px){.card{padding:20px;border-radius:28px}.inputs{grid-template-columns:1fr}.buttons{grid-template-columns:1fr}.stop{min-height:52px}}
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <div class="orb" aria-hidden="true"></div>
+    <section class="card" aria-label="ランダムタイマー">
+      <div class="topline">
+        <div class="brand"><span class="dot"></span> RANDOM STARTER</div>
+        <div class="status-pill" id="status">待機中</div>
+      </div>
+
+      <h1>まず、<br>始める。</h1>
+      <p class="lead">終わりは見えません。設定した範囲のどこかで、突然鳴ります。考える前に、少しだけ手を動かすためのタイマーです。</p>
+
+      <div class="mystery" aria-live="polite">
+        <div class="hidden-time" id="mystery">••:••</div>
+        <div class="caption" id="caption">残り時間は隠されています</div>
+      </div>
+
+      <div class="inputs">
+        <label>
+          <span>最短時間 / 分</span>
+          <input id="min" inputmode="decimal" type="number" min="0.1" step="0.1" value="5" />
+        </label>
+        <label>
+          <span>最長時間 / 分</span>
+          <input id="max" inputmode="decimal" type="number" min="0.1" step="0.1" value="10" />
+        </label>
+      </div>
+
+      <div class="buttons">
+        <button class="start" id="start">はじめる</button>
+        <button class="stop" id="stop" disabled>停止</button>
+      </div>
+      <div class="message" id="message">5〜10分のどこかで鳴ります。</div>
+    </section>
+  </main>
+  <div class="done-flash"></div>
+
+  <dialog id="doneDialog">
+    <h2>そこまで。</h2>
+    <p>今の一歩で十分です。続けられそうなら続けてもいいし、やめても大丈夫。</p>
+    <button class="again" id="again">もう一回ランダムに始める</button>
+    <div class="tiny">実際に鳴った時間は表示しません。</div>
+  </dialog>
+
+  <script>
+    const app = document.getElementById('app');
+    const statusEl = document.getElementById('status');
+    const messageEl = document.getElementById('message');
+    const captionEl = document.getElementById('caption');
+    const minEl = document.getElementById('min');
+    const maxEl = document.getElementById('max');
+    const startBtn = document.getElementById('start');
+    const stopBtn = document.getElementById('stop');
+    const againBtn = document.getElementById('again');
+    const dialog = document.getElementById('doneDialog');
+
+    let timerId = null;
+    let audioCtx = null;
+
+    function randomDurationMs(minMinutes, maxMinutes) {
+      const min = minMinutes * 60 * 1000;
+      const max = maxMinutes * 60 * 1000;
+      return Math.floor(min + Math.random() * (max - min));
+    }
+
+    function setRunning(isRunning) {
+      document.body.classList.toggle('running', isRunning);
+      statusEl.textContent = isRunning ? '進行中' : '待機中';
+      startBtn.disabled = isRunning;
+      stopBtn.disabled = !isRunning;
+      minEl.disabled = isRunning;
+      maxEl.disabled = isRunning;
+    }
+
+    function beep() {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.16);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.16);
+        gain.gain.exponentialRampToValueAtTime(0.28, now + i * 0.16 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.16 + 0.22);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(now + i * 0.16);
+        osc.stop(now + i * 0.16 + 0.24);
+      });
+      if (navigator.vibrate) navigator.vibrate([130, 60, 130, 60, 240]);
+    }
+
+    function finish() {
+      timerId = null;
+      setRunning(false);
+      document.body.classList.add('flash');
+      setTimeout(() => document.body.classList.remove('flash'), 950);
+      beep();
+      messageEl.textContent = '鳴りました。時間は秘密のままです。';
+      captionEl.textContent = '完了しました';
+      if (!dialog.open) dialog.showModal();
+    }
+
+    function startTimer() {
+      const min = Number(minEl.value);
+      const max = Number(maxEl.value);
+
+      if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || max <= 0) {
+        messageEl.textContent = '最短・最長は0より大きい数字にしてください。';
+        return;
+      }
+      if (min >= max) {
+        messageEl.textContent = '最長時間は、最短時間より長くしてください。';
+        return;
+      }
+
+      clearTimeout(timerId);
+      const duration = randomDurationMs(min, max);
+      setRunning(true);
+      captionEl.textContent = 'いつ鳴るかは、見えません';
+      messageEl.textContent = `${min}〜${max}分のどこかで突然鳴ります。今は始めるだけ。`;
+      timerId = setTimeout(finish, duration);
+    }
+
+    function stopTimer() {
+      clearTimeout(timerId);
+      timerId = null;
+      setRunning(false);
+      captionEl.textContent = '残り時間は隠されています';
+      messageEl.textContent = '停止しました。もう一度、気軽に始められます。';
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    stopBtn.addEventListener('click', stopTimer);
+    againBtn.addEventListener('click', () => {
+      dialog.close();
+      startTimer();
+    });
+
+    dialog.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      dialog.close();
+    });
+  </script>
+</body>
+</html>
