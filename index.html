@@ -245,11 +245,11 @@
       <div class="inputs">
         <label>
           <span>最短時間 / 分</span>
-          <input id="min" inputmode="decimal" type="number" min="0.1" step="0.1" value="5" />
+          <input id="min" inputmode="numeric" type="number" min="1" step="1" value="5" />
         </label>
         <label>
           <span>最長時間 / 分</span>
-          <input id="max" inputmode="decimal" type="number" min="0.1" step="0.1" value="10" />
+          <input id="max" inputmode="numeric" type="number" min="1" step="1" value="10" />
         </label>
       </div>
 
@@ -294,6 +294,7 @@
       document.body.classList.toggle('running', isRunning);
       statusEl.textContent = isRunning ? '進行中' : '待機中';
       startBtn.disabled = isRunning;
+      startBtn.textContent = isRunning ? '進行中…' : 'はじめる';
       stopBtn.disabled = !isRunning;
       minEl.disabled = isRunning;
       maxEl.disabled = isRunning;
@@ -333,8 +334,8 @@
       const min = Number(minEl.value);
       const max = Number(maxEl.value);
 
-      if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || max <= 0) {
-        messageEl.textContent = '最短・最長は0より大きい数字にしてください。';
+      if (!Number.isFinite(min) || !Number.isFinite(max) || min < 1 || max < 1) {
+        messageEl.textContent = '最短・最長は1以上の整数にしてください。';
         return;
       }
       if (min >= max) {
